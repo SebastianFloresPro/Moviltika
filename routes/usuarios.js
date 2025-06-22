@@ -251,5 +251,20 @@ router.get('/register/rdf', (req, res) => {
     res.type('application/rdf+xml');
     res.send(rdf);
 });
+// Obtener datos de perfil del usuario por ID (versión para apps móviles)
+router.get('/perfil/usuario/datos/:id', (req, res) => {
+  const userId = req.params.id;
+  const sql = 'SELECT nombre, edad, correo, telefono FROM usuario WHERE idusuario = ?';
+  db.query(sql, [userId], (err, results) => {
+      if (err) {
+          console.error('Error al obtener datos del usuario:', err);
+          return res.status(500).json({ success: false, message: 'Error del servidor' });
+      }
+      if (results.length === 0) {
+          return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+      }
+      res.json({ success: true, data: results[0] });
+  });
+});
 
 module.exports = router;
