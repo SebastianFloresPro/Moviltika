@@ -56,6 +56,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- CONFIGURACIÓN DE SESIÓN ---
 const sessionStore = new SequelizeStore({
