@@ -173,8 +173,11 @@ router.post('/solicitar-adopcion', (req, res) => {
     });
 });
 
-router.get('/buscar', (req, res) => {
-    const termino = req.query.q;
+router.get('/buscar', buscarMascotas); // Flutter
+router.get('/busqueda/mascotas', buscarMascotas); // Web
+
+function buscarMascotas(req, res) {
+    const termino = req.query.q || req.query.termino;
 
     if (!termino || termino.trim() === '') {
         return res.status(400).json({ success: false, message: 'Debe enviar un término de búsqueda' });
@@ -194,8 +197,8 @@ router.get('/buscar', (req, res) => {
             console.error('Error en búsqueda de mascotas:', err);
             return res.status(500).json({ success: false, message: 'Error en la búsqueda' });
         }
-        res.json({ success: true, resultados: results });
+        res.json({ success: true, mascotas: results });
     });
-});
+}
 
 module.exports = router;
