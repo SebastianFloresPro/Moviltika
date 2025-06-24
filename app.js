@@ -99,6 +99,7 @@ app.use('/usuarios', require('./routes/usuarios'));
 app.use('/refugios', require('./routes/refugios'));
 app.use('/mascotas', require('./routes/mascotas'));
 app.use('/solicitudes', require('./routes/solicitudes'));
+app.use('/busqueda', require('./routes/busqueda')); 
 
 // --- MANEJO DE ERRORES CORS (opcional, para desarrollo) ---
 app.use((err, req, res, next) => {
