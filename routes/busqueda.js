@@ -6,12 +6,13 @@ const { db } = require('../config/database');
 router.get('/mascotas', (req, res) => {
   const termino = req.query.q;
 
-  console.log('🟡 Término recibido para búsqueda:', termino);
+  console.log('🟡 Término recibido:', termino);
 
   if (!termino || termino.trim() === '') {
+    console.log('❌ Término vacío o nulo');
     return res.status(400).json({
       success: false,
-      message: 'Debe enviar un término de búsqueda'
+      message: 'Debe enviar un término para la búsqueda'
     });
   }
 
@@ -33,8 +34,10 @@ router.get('/mascotas', (req, res) => {
       });
     }
 
+    console.log(`✅ Mascotas encontradas: ${results.length}`);
     res.json({ success: true, mascotas: results });
   });
 });
+
 
 module.exports = router;
