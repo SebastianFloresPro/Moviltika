@@ -1,25 +1,20 @@
-// routes/busqueda.js
 const express = require('express');
 const router = express.Router();
 const { db } = require('../config/database');
 
-router.get('/mascotas', (req, res) => {
-  console.log('📥 Accediendo a /busqueda/mascotas');
-  console.log('🔎 Query recibida:', req.query);
+router.get('/mascotas/:termino', (req, res) => {
+  const termino = req.params.termino;
 
-  const terminoRaw = req.query.q;
+  console.log('📥 Término recibido desde ruta:', termino);
 
-  // Verificación segura del término
-  if (typeof terminoRaw !== 'string' || !terminoRaw.trim()) {
-    console.log('❌ Término inválido:', terminoRaw);
+  if (!termino || !termino.trim()) {
     return res.status(400).json({
       success: false,
       message: 'Debe proporcionar un término para buscar'
     });
   }
 
-  const termino = terminoRaw.trim().toLowerCase();
-  const like = `%${termino}%`;
+  const like = `%${termino.toLowerCase()}%`;
 
   const sql = `
     SELECT mascota.*, centrosdeadopcion.nombrecentro 
@@ -30,17 +25,16 @@ router.get('/mascotas', (req, res) => {
 
   db.query(sql, [like, like], (err, results) => {
     if (err) {
-      console.error('🔴 Error en consulta:', err);
+      console.error('🔴 Error en la búsqueda:', err);
       return res.status(500).json({
         success: false,
         message: 'Error al buscar mascotas'
       });
     }
 
-    console.log(`✅ Mascotas encontradas: ${results.length}`);
+    console.log(`✅ Resultados encontrados: ${results.length}`);
     res.json({ success: true, mascotas: results });
   });
 });
 
 module.exports = router;
-
