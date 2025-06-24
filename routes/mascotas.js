@@ -173,4 +173,29 @@ router.post('/solicitar-adopcion', (req, res) => {
     });
 });
 
+router.get('/buscar', (req, res) => {
+    const termino = req.query.q;
+
+    if (!termino || termino.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Debe enviar un término de búsqueda' });
+    }
+
+    const sql = `
+        SELECT mascota.*, centrosdeadopcion.nombrecentro 
+        FROM mascota 
+        JOIN centrosdeadopcion ON mascota.idcentro = centrosdeadopcion.idcentro
+        WHERE LOWER(mascota.nombre) LIKE ? OR LOWER(mascota.especie) LIKE ?
+    `;
+
+    const likeTerm = `%${termino.toLowerCase()}%`;
+
+    db.query(sql, [likeTerm, likeTerm], (err, results) => {
+        if (err) {
+            console.error('Error en búsqueda de mascotas:', err);
+            return res.status(500).json({ success: false, message: 'Error en la búsqueda' });
+        }
+        res.json({ success: true, resultados: results });
+    });
+});
+
 module.exports = router;
