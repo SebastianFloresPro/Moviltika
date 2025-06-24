@@ -60,7 +60,7 @@ router.get('/solicitudes', (req, res) => {
     });
 });
 
-router.post('/solicitudes/:id/estado', (req, res) => {
+router.post('/:id/estado', (req, res) => {
     const solicitudId = req.params.id;
     const { estado } = req.body;
 
