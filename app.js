@@ -1,4 +1,3 @@
-// app.js
 require('dotenv').config();
 
 const express = require('express');
@@ -15,13 +14,13 @@ const port = process.env.PORT || 3000;
 // --- CONFIGURACIÓN DE CORS ---
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://tikapawdbp-48n3.onrender.com'  // Tu frontend REAL
+  'https://tikapawdbp-48n3.onrender.com', // ejemplo de frontend
+  'https://moviltika-production.up.railway.app', // Railway backend para Flutter
+  undefined // 👈 APKs y Postman no envían origin
 ];
 
-// Middleware CORS oficial
 app.use(cors({
   origin: function(origin, callback) {
-    // Permite solicitudes sin origin (ej: Postman o curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -31,7 +30,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Middleware para manejar OPTIONS y headers CORS personalizados
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -49,7 +47,7 @@ app.use((req, res, next) => {
 });
 
 // --- CONFIGURACIONES BÁSICAS ---
-app.set('trust proxy', 1);  // Para producción detrás de proxy (ej: Heroku)
+app.set('trust proxy', 1); // Necesario en producción (Railway, Render)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -58,7 +56,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- CONFIGURACIÓN DE SESIÓN ---
+// --- SESIONES ---
 const sessionStore = new SequelizeStore({
   db: sequelize,
   tableName: 'sessions',
@@ -75,17 +73,20 @@ app.use(session({
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    secure: isProduction,
+    secure: isProduction,               // ✅ TRUE solo en Railway con HTTPS
     httpOnly: true,
-    sameSite: isProduction ? 'none' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',  // ✅ 'none' si es HTTPS
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
 
 sessionStore.sync();
 
+// --- LOG de sesión y cookies ---
 app.use((req, res, next) => {
-  console.log('Sesión actual:', {
+  console.log('📥 Headers:', req.headers);
+  console.log('🔐 Cookie recibida:', req.headers.cookie);
+  console.log('🧠 Sesión:', {
     userId: req.session.userId,
     tipo: req.session.tipo,
     cookie: req.session.cookie
@@ -99,12 +100,12 @@ app.use('/usuarios', require('./routes/usuarios'));
 app.use('/refugios', require('./routes/refugios'));
 app.use('/mascotas', require('./routes/mascotas'));
 app.use('/solicitudes', require('./routes/solicitudes'));
-app.use('/busqueda', require('./routes/busqueda')); 
+app.use('/busqueda', require('./routes/busqueda'));
 
-// --- MANEJO DE ERRORES CORS (opcional, para desarrollo) ---
+// --- MANEJO DE ERRORES CORS ---
 app.use((err, req, res, next) => {
   if (err && err.message && err.message.includes('CORS')) {
-    console.error('Error de CORS:', err.message);
+    console.error('🚫 Error de CORS:', err.message);
     return res.status(403).json({ error: err.message });
   }
   next(err);
@@ -112,5 +113,6 @@ app.use((err, req, res, next) => {
 
 // --- INICIO DEL SERVIDOR ---
 app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
 });
+
