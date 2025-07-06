@@ -19,7 +19,10 @@ router.get('/registerrefugio', (req, res) => {
 });
 */
 
-router.post('/registerrefugio', async (req, res) => {
+router.post('/registerrefugio', upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'portada', maxCount: 1 }
+]), async (req, res) => {
     const { nombreencargado, nombrecentro, telefono, correo, redesociales, contrasena } = req.body;
     const adopcion = true;
 
@@ -27,8 +30,11 @@ router.post('/registerrefugio', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(contrasena || '123', saltRounds);
 
-        const sql = 'INSERT INTO centrosdeadopcion (nombrecentro, adopcion, nombreencargado, telefono, correo, contrasena, redesociales) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        db.query(sql, [nombrecentro, adopcion, nombreencargado, telefono, correo, hashedPassword, redesociales], (err, result) => {
+        const logoFile = req.files['logo']?.[0]?.filename || null;
+        const portadaFile = req.files['portada']?.[0]?.filename || null;
+
+        const sql = 'INSERT INTO centrosdeadopcion (nombrecentro, adopcion, nombreencargado, telefono, correo, contrasena, redesociales, logo, portada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.query(sql, [nombrecentro, adopcion, nombreencargado, telefono, correo, hashedPassword, redesociales, logoFile, portadaFile], (err, result) => {
             if (err) {
                 console.error('Error al registrar refugio:', err);
                 return res.json({ success: false, message: 'Error al registrar refugio' });
@@ -41,6 +47,7 @@ router.post('/registerrefugio', async (req, res) => {
         res.json({ success: false, message: 'Error al procesar el registro' });
     }
 });
+
 /*
 router.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../views', 'refugios.html'));
