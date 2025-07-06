@@ -19,35 +19,105 @@ router.get('/registerrefugio', (req, res) => {
 });
 */
 
-router.post('/registerrefugio', upload.fields([
+router.post(
+  '/registerrefugio',
+  upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'portada', maxCount: 1 }
-]), async (req, res) => {
-    const { nombreencargado, nombrecentro, telefono, correo, redesociales, contrasena } = req.body;
+  ]),
+  async (req, res) => {
+    console.log('➡️ POST /registerrefugio recibido');
+    console.log('📦 req.body:', req.body);
+    console.log('🖼 req.files:', req.files);
+
+    const {
+      nombreencargado,
+      nombrecentro,
+      telefono,
+      correo,
+      redesociales,
+      contrasena
+    } = req.body;
+
+    // Validar campos requeridos
+    if (
+      !nombreencargado ||
+      !nombrecentro ||
+      !telefono ||
+      !correo ||
+      !redesociales ||
+      !contrasena
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos requeridos faltantes en el cuerpo de la solicitud'
+      });
+    }
+
     const adopcion = true;
 
     try {
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(contrasena || '123', saltRounds);
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(contrasena, saltRounds);
 
-        const logoFile = req.files['logo']?.[0]?.filename || null;
-        const portadaFile = req.files['portada']?.[0]?.filename || null;
+      const logoFile = req.files?.logo?.[0]?.filename || null;
+      const portadaFile = req.files?.portada?.[0]?.filename || null;
 
-        const sql = 'INSERT INTO centrosdeadopcion (nombrecentro, adopcion, nombreencargado, telefono, correo, contrasena, redesociales, logo, portada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        db.query(sql, [nombrecentro, adopcion, nombreencargado, telefono, correo, hashedPassword, redesociales, logoFile, portadaFile], (err, result) => {
-            if (err) {
-                console.error('Error al registrar refugio:', err);
-                return res.json({ success: false, message: 'Error al registrar refugio' });
-            }
-            const newId = result.insertId;
-            res.json({ success: true, message: 'Refugio registrado exitosamente', idcentro: newId });
-        });
+      console.log('✅ Archivos procesados correctamente');
+      console.log('🖼 Logo:', logoFile);
+      console.log('🖼 Portada:', portadaFile);
+
+      const sql = `
+        INSERT INTO centrosdeadopcion (
+          nombrecentro, adopcion, nombreencargado, telefono,
+          correo, contrasena, redesociales, logo, portada
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      db.query(
+        sql,
+        [
+          nombrecentro,
+          adopcion,
+          nombreencargado,
+          telefono,
+          correo,
+          hashedPassword,
+          redesociales,
+          logoFile,
+          portadaFile
+        ],
+        (err, result) => {
+          if (err) {
+            console.error('❌ Error SQL al registrar refugio:', err.message);
+            return res.status(500).json({
+              success: false,
+              message: 'Error al registrar refugio en la base de datos',
+              error: err.message
+            });
+          }
+
+          const newId = result.insertId;
+          console.log('✅ Refugio registrado con ID:', newId);
+
+          res.status(200).json({
+            success: true,
+            message: 'Refugio registrado exitosamente',
+            idcentro: newId
+          });
+        }
+      );
     } catch (error) {
-        console.error('Error al encriptar contraseña:', error);
-        res.json({ success: false, message: 'Error al procesar el registro' });
+      console.error('❌ Error al encriptar contraseña:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Error al procesar el registro',
+        error: error.message
+      });
     }
-});
-
+  }
+);
 /*
 router.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../views', 'refugios.html'));
